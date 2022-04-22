@@ -2,7 +2,7 @@
 # powershell Set-ExecutionPolicy RemoteSigned
 
 $files = Get-ChildItem -Recurse -Include *.java $PSScriptRoot\src\
-$output = "bundle.java"
+$output = "orangebot.java"
 
 if(Test-Path $PSScriptRoot\$output){
 
