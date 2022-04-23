@@ -2,8 +2,9 @@ package src;
 
 public class Hero {
     int id, x, y;
-    Command command;
+    Command command = null;
     Monster closestMonster;
+    boolean hasCommand = false;
 
     public Hero(int id, int x, int y) {
         this.id = id;
@@ -42,11 +43,26 @@ public class Hero {
         this.y = y;
     }
 
+    public boolean hasCommand() {
+        if(this.command == null){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
     public Command getCommand() {
+        /*
+        if(command == null){
+                System.err.println("No command set, waiting... fix this");
+                return new Command("WAIT", this.x,this.y);
+        }
+        */
         return command;
     }
 
     public void setCommand(Command command) {
+        this.hasCommand = true;
         this.command = command;
     }
 
@@ -64,8 +80,8 @@ public class Hero {
                 "id=" + id +
                 ", x=" + x +
                 ", y=" + y +
-                ", command=" + command +
-                ", closestMonsterID=" + closestMonster.getId +
+                ", Command=" + command +
+                ", Closest=" + closestMonster +
                 '}';
     }
 }

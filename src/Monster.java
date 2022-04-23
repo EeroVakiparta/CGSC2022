@@ -2,10 +2,10 @@ package src;
 
 public class Monster {
     int id, x, y;
-    boolean nearBase;
+    int nearBase;
     int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
 
-    public Monster(int id, int x, int y, boolean nearBase, int threatFor) {
+    public Monster(int id, int x, int y, int nearBase, int threatFor) {
         this.id = id;
         this.x = x;
         this.y = y;
@@ -37,11 +37,11 @@ public class Monster {
         this.y = y;
     }
 
-    public boolean isNearBase() {
+    public int isNearBase() {
         return nearBase;
     }
 
-    public void setNearBase(boolean nearBase) {
+    public void setNearBase(int nearBase) {
         this.nearBase = nearBase;
     }
 

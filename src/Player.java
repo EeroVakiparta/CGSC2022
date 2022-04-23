@@ -34,54 +34,126 @@ class Player {
                 int threatFor = in.nextInt(); // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
                 switch (type) {
                     case 0: // monster
-                        monster.add(new Monster(id, x, y, nearBase, threatFor))
+                        Monster m = new Monster(id, x, y, nearBase, threatFor);
+                        monsters.add(m);
                         break;
                     case 1: // hero
-                        heros.add(new Hero(id, x, y))
+                        heroes.add(new Hero(id, x, y));
                         break;
                     case 2: // enermy
                         break;
                 }
             }
             List<Monster> dangerousMonsters = new ArrayList<>();
+            List<Monster> wanderingMonsters = new ArrayList<>();
+            int visibleMonsters = 0;
+
             for (int i = 0; i < monsters.size(); i++) {
-                if (monsters.get(i).getThreatFor == 1) {
+                if (monsters.get(i).getThreatFor() == 1 || monsters.get(i).isNearBase() == 1) {
                     dangerousMonsters.add(monsters.get(i));
-                    System.err.println("Added monster id: " + monsters.get(i) + " as dangerous.")
+                    //System.err.println(monsters.get(i) + " as dangerous.");
+                    visibleMonsters++;
+                }else if (monsters.get(i).getThreatFor() == 0) {
+                    wanderingMonsters.add(monsters.get(i));
+                    //System.err.println(monsters.get(i) + " as wandering.");
+                    visibleMonsters++;
                 }
+            }
+            System.err.println("Dangerous:" + dangerousMonsters.size() + " wandering:" + wanderingMonsters.size());
+
+
+            if(monsters.size() == 0){
+                System.err.println("No monsters to begin with?.");
             }
 
             int x1, x2, y1, y2;
             double distance;
-            double closestDistance:
+            double closestDistance = 999999.9;
 
             if (dangerousMonsters.size() > 0) {
+                System.err.println("Dangerous mosnters sorting.");
                 for (int i = 0; i < heroes.size(); i++) {
-                    Monster closestMonster;
-                    Hero theHero heroes.get(i);
-                    x1 = theHero.getX;
-                    y1 = theHero.getY;
+                    Monster closestMonster = null;;
+                    if(dangerousMonsters.size() > 0){
+                        closestMonster = dangerousMonsters.get(0);
+                    }
+
+                    Hero theHero = heroes.get(i);
+                    x1 = theHero.getX();
+                    y1 = theHero.getY();
                     for (int j = 0; j < dangerousMonsters.size(); j++) {
-                        x2 = dangerousMonsters.get(j).getX;
-                        y2 = dangerousMonsters.get(j).getY;
+                        x2 = dangerousMonsters.get(j).getX();
+                        y2 = dangerousMonsters.get(j).getY();
                         distance = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
                         if (distance < closestDistance) {
                             closestDistance = distance;
                             closestMonster = dangerousMonsters.get(j);
-                            theHero.get(i).setClosestMonster(closestMonster);
+                            theHero.setClosestMonster(closestMonster);
+                            System.err.println(closestMonster.getId() +" set closest for:" + theHero.getId());
                         }
                     }
+                    if(closestMonster != null && dangerousMonsters.size() > 0){
+                        Command attackCommand = new Command("MOVE", closestMonster.getX(), closestMonster.getY());
+                        theHero.setCommand(attackCommand);
+                        System.err.println(attackCommand.toString());
 
-                    Command attackCommand = new Command("MOVE", closestMonster.x, closestMonster.y)
-                    theHero.setCommand(attackCommand);
-
-                    for (int i = 0; i < dangerousMonsters.size(); i++) {
-                        if (closestMonster.equals(dangerousMonsters.get(i)) {
-                            dangerousMonsters.remove(i);
+                        for (int k = 0; k < dangerousMonsters.size(); k++) {
+                            if (closestMonster.equals(dangerousMonsters.get(k))) {
+                                dangerousMonsters.remove(k);
+                            }
                         }
+                    } else{
+                        System.err.println("No dangerous monsters anywhere");
+                        theHero.setCommand(new Command(Command.WAIT,theHero.getX(),theHero.getY()));
                     }
-
                 }
+            }
+            if(wanderingMonsters.size() > 0 && dangerousMonsters.size() < 3){
+                System.err.println("wanderingMonsters exsists");
+                for (int i = 0; i < heroes.size(); i++) {
+                    Monster closestMonster = null;;
+                    if(wanderingMonsters.size() > 0){
+                        closestMonster = wanderingMonsters.get(0);
+                    }
+                    Hero theHero = heroes.get(i);
+                    x1 = theHero.getX();
+                    y1 = theHero.getY();
+                    for (int j = 0; j < wanderingMonsters.size(); j++) {
+                        x2 = wanderingMonsters.get(j).getX();
+                        y2 = wanderingMonsters.get(j).getY();
+                        distance = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+                        if (distance < closestDistance) {
+                            closestDistance = distance;
+                            closestMonster = wanderingMonsters.get(j);
+                            theHero.setClosestMonster(closestMonster);
+                        }
+                    }
+                    if(closestMonster != null && theHero.hasCommand() == false){
+                        Command attackCommand = new Command("MOVE", closestMonster.getX(), closestMonster.getY());
+                        theHero.setCommand(attackCommand);
+                        System.err.println(attackCommand.toString());
+
+                        for (int k = 0; k < wanderingMonsters.size(); k++) {
+                            if (closestMonster.equals(wanderingMonsters.get(k))) {
+                                System.err.println("Removing monster:" + closestMonster.getId() + "assigned to" +theHero.getId());
+                                wanderingMonsters.remove(k);
+                            }
+                        }
+                    } else{
+                        System.err.println("No Monsters anywhere" + theHero.getId());
+                        theHero.setCommand(new Command(Command.WAIT,theHero.getX(),theHero.getY()));
+                    }
+                }
+            }
+
+            if(visibleMonsters == 0){
+                // first crude attempt of starting formation
+
+                System.err.println("Heroes to formation");
+                heroes.get(0).setCommand(new Command(Command.MOVE, 4000,1700));
+                heroes.get(1).setCommand(new Command(Command.MOVE, 700,4000));
+                heroes.get(2).setCommand(new Command(Command.MOVE, 7000,7000));
+
             }
 
             for (int i = 0; i < heroesPerPlayer; i++) {
@@ -94,7 +166,11 @@ class Player {
                 // 4. Deside if having a "goal keeper- hero" is a good approach.
                 // 5. See If can advance league with just this.
                 // In the first league: MOVE <x> <y> | WAIT; In later leagues: | SPELL <spellParams>;
-                heroes.get(i).getCommand.toString;
+
+                System.err.println(heroes.get(i).toString());
+                System.err.println(heroes.get(i).getCommand());
+                System.out.println(heroes.get(i).getCommand().toString());
+
             }
         }
     }

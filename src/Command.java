@@ -23,7 +23,6 @@ public class Command {
         this.targetCellIdx = targetCellIdx;
         this.sourceCellIdx = sourceCellIdx;
     }
-    //TODO: command takes a monster as parameter
 
     public Command(String type, Integer targetCellIdx) {
         this(type, null, targetCellIdx);
@@ -44,3 +43,4 @@ public class Command {
         return String.format("%s %d", type, targetCellIdx);
     }
 }
+
