@@ -47,8 +47,9 @@ class Command {
 
 class Hero {
     int id, x, y;
-    Command command;
+    Command command = null;
     Monster closestMonster;
+    boolean hasCommand = false;
 
     public Hero(int id, int x, int y) {
         this.id = id;
@@ -87,15 +88,26 @@ class Hero {
         this.y = y;
     }
 
-    public Command getCommand() {
-        if(command == null){
-            System.err.println("No command set, waiting... fix this");
-            return new Command("WAIT", this.x,this.y);
+    public boolean hasCommand() {
+        if(this.command == null){
+            return false;
+        }else{
+            return true;
         }
+    }
+
+    public Command getCommand() {
+        /*
+        if(command == null){
+                System.err.println("No command set, waiting... fix this");
+                return new Command("WAIT", this.x,this.y);
+        }
+        */
         return command;
     }
 
     public void setCommand(Command command) {
+        this.hasCommand = true;
         this.command = command;
     }
 
@@ -113,7 +125,8 @@ class Hero {
                 "id=" + id +
                 ", x=" + x +
                 ", y=" + y +
-
+                ", Command=" + command +
+                ", Closest=" + closestMonster +
                 '}';
     }
 }
@@ -241,27 +254,30 @@ class Player {
                 }
             }
             List<Monster> dangerousMonsters = new ArrayList<>();
-            for (int i = 0; i < monsters.size(); i++) {
-                if (monsters.get(i).getThreatFor() == 1) {
-                    dangerousMonsters.add(monsters.get(i));
-                    System.err.println("Added monster id: " + monsters.get(i) + " as dangerous.");
-                }
-            }
             List<Monster> wanderingMonsters = new ArrayList<>();
+            int visibleMonsters = 0;
+
             for (int i = 0; i < monsters.size(); i++) {
-                if (monsters.get(i).getThreatFor() == 0) {
+                if (monsters.get(i).getThreatFor() == 1 || monsters.get(i).isNearBase() == 1) {
+                    dangerousMonsters.add(monsters.get(i));
+                    //System.err.println(monsters.get(i) + " as dangerous.");
+                    visibleMonsters++;
+                }else if (monsters.get(i).getThreatFor() == 0) {
                     wanderingMonsters.add(monsters.get(i));
-                    System.err.println("Added monster id: " + monsters.get(i) + " as wandering.");
+                    //System.err.println(monsters.get(i) + " as wandering.");
+                    visibleMonsters++;
                 }
             }
+            System.err.println("Dangerous:" + dangerousMonsters.size() + " wandering:" + wanderingMonsters.size());
+
 
             if(monsters.size() == 0){
-                System.err.println("No monsters.");
+                System.err.println("No monsters to begin with?.");
             }
 
             int x1, x2, y1, y2;
             double distance;
-            double closestDistance = 99999.9;
+            double closestDistance = 999999.9;
 
             if (dangerousMonsters.size() > 0) {
                 System.err.println("Dangerous mosnters sorting.");
@@ -282,6 +298,7 @@ class Player {
                             closestDistance = distance;
                             closestMonster = dangerousMonsters.get(j);
                             theHero.setClosestMonster(closestMonster);
+                            System.err.println(closestMonster.getId() +" set closest for:" + theHero.getId());
                         }
                     }
                     if(closestMonster != null && dangerousMonsters.size() > 0){
@@ -320,22 +337,32 @@ class Player {
                             theHero.setClosestMonster(closestMonster);
                         }
                     }
-                    if(closestMonster != null && theHero.getCommand().type != "MOVE"){
+                    if(closestMonster != null && theHero.hasCommand() == false){
                         Command attackCommand = new Command("MOVE", closestMonster.getX(), closestMonster.getY());
                         theHero.setCommand(attackCommand);
                         System.err.println(attackCommand.toString());
 
                         for (int k = 0; k < wanderingMonsters.size(); k++) {
                             if (closestMonster.equals(wanderingMonsters.get(k))) {
-                                System.err.println("Removing monster:" + closestMonster);
+                                System.err.println("Removing monster:" + closestMonster.getId() + "assigned to" +theHero.getId());
                                 wanderingMonsters.remove(k);
                             }
                         }
                     } else{
-                        System.err.println("No Monsters anywhere");
+                        System.err.println("No Monsters anywhere" + theHero.getId());
                         theHero.setCommand(new Command(Command.WAIT,theHero.getX(),theHero.getY()));
                     }
                 }
+            }
+
+            if(visibleMonsters == 0){
+                // first crude attempt of starting formation
+
+                System.err.println("Heroes to formation");
+                heroes.get(0).setCommand(new Command(Command.MOVE, 4000,1700));
+                heroes.get(1).setCommand(new Command(Command.MOVE, 700,4000));
+                heroes.get(2).setCommand(new Command(Command.MOVE, 7000,7000));
+
             }
 
             for (int i = 0; i < heroesPerPlayer; i++) {
@@ -348,10 +375,10 @@ class Player {
                 // 4. Deside if having a "goal keeper- hero" is a good approach.
                 // 5. See If can advance league with just this.
                 // In the first league: MOVE <x> <y> | WAIT; In later leagues: | SPELL <spellParams>;
-                Hero thisHero = heroes.get(i);
-                System.err.println(thisHero.toString());
-                System.err.println(thisHero.getCommand());
-                System.out.println(thisHero.getCommand().toString());
+
+                System.err.println(heroes.get(i).toString());
+                System.err.println(heroes.get(i).getCommand());
+                System.out.println(heroes.get(i).getCommand().toString());
 
             }
         }
