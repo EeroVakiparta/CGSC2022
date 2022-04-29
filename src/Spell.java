@@ -1,6 +1,5 @@
 package src;
 
-import java.util.Scanner;
 /*
 Spells
         Your team will also acquire 1 point of mana per damage dealt to a monster, even from monsters with no health left.
