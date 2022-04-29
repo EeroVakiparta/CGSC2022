@@ -12,11 +12,8 @@ Spells
         CONTROL	<entityId> <x> <y>	Override the target's next action with a step towards the given coordinates.	2200
         A hero may only cast a spell on entities that are within the spell's range from the hero.
 */
-
-public class Spell {
-
+class Spell {
     static final String WIND = "WIND";
     static final String SHIELD = "SHIELD";
     static final String CONTROL = "CONTROL";
-
 }

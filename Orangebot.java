@@ -1,21 +1,49 @@
-//Bundle uploaded at 04/23/2022 11:17:01
+//Bundle uploaded at 04/30/2022 01:59:47
 import java.util.*;
 import java.util.stream.Collectors;
 class Command {
     static final String WAIT = "WAIT";
     static final String MOVE = "MOVE";
+    static final String SPELL = "SPELL";
+    static final String CONTROL = "CONTROL";
+    static final String WIND = "WIND";
     static Command parse(String action) {
         String[] parts = action.split(" ");
         switch (parts[0]) {
             case MOVE:
                 return new Command(MOVE, Integer.valueOf(parts[1]), Integer.valueOf(parts[2]));
+            case SPELL:
+                switch (parts[1]) {
+                    case CONTROL:
+                        return new Command(SPELL, CONTROL, Integer.valueOf(parts[1]), Integer.valueOf(parts[2]), Integer.valueOf(parts[3]));
+                    case WIND:
+                        return new Command(SPELL, WIND, Integer.valueOf(parts[1]), Integer.valueOf(parts[2]));
+                    default:
+                        return new Command(WAIT);
+                }
             default:
                 return new Command(WAIT);
         }
     }
     String type;
+    String spell;
+    Integer targetEntityId;
     Integer targetCellIdx;
     Integer sourceCellIdx;
+    public Command(String type, String spell, Integer targetEntityId, Integer sourceCellIdx, Integer targetCellIdx) {
+        this.type = type;
+        this.spell = spell;
+        this.targetEntityId = targetEntityId;
+        this.targetCellIdx = targetCellIdx;
+        this.sourceCellIdx = sourceCellIdx;
+    }
+    public Command(String type, String spell, Integer sourceCellIdx, Integer targetCellIdx) {
+        this.type = type;
+        this.spell = spell;
+        this.targetEntityId = null;
+        this.targetCellIdx = targetCellIdx;
+        this.sourceCellIdx = sourceCellIdx;
+    }
     public Command(String type, Integer sourceCellIdx, Integer targetCellIdx) {
         this.type = type;
         this.targetCellIdx = targetCellIdx;
@@ -35,8 +63,16 @@ class Command {
         if (type.equals(MOVE)) {
             return String.format("%s %d %d", type, sourceCellIdx, targetCellIdx);
         }
+        if (type.equals(SPELL)) {
+            if(spell.equals(CONTROL)){
+                return String.format("%s %s %d %d %d", type, spell, targetEntityId, sourceCellIdx, targetCellIdx);
+            }else if(spell.equals(WIND)){
+                return String.format("%s %s %d %d", type, spell, sourceCellIdx, targetCellIdx);
+            }
+        }
         return String.format("%s %d", type, targetCellIdx);
     }
+}
 }
 class Hero {
     int id, x, y;
@@ -114,13 +150,15 @@ class Monster {
     int nearBase;
     int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
     boolean isTargeted;
-    public Monster(int id, int x, int y, int nearBase, int threatFor) {
+    int health;
+    public Monster(int id, int x, int y, int nearBase, int threatFor, int health) {
         this.id = id;
         this.x = x;
         this.y = y;
         this.nearBase = nearBase;
         this.threatFor = threatFor;
         this.isTargeted = false;
+        this.health = health;
     }
     public int getId() {
         return id;
@@ -158,6 +196,12 @@ class Monster {
     public void setTargeted(boolean targeted) {
         isTargeted = targeted;
     }
+    public int getHealth() {
+        return health;
+    }
+    public void setHealth(int health) {
+        this.health = health;
+    }
     @Override
     public String toString() {
         return "Monster{" +
@@ -187,13 +231,26 @@ class Player {
         int baseX = in.nextInt(); // The corner of the map representing your base
         int baseY = in.nextInt();
         int heroesPerPlayer = in.nextInt(); // Always 3
+        int mana = 0;
+        boolean isHomeBaseLeft;
+        int enemyBaseX = 0;
+        int enemyBaseY = 0;
+        if(baseX < 1000){
+            isHomeBaseLeft = true;
+            enemyBaseX = 17630;
+            enemyBaseY = 9000;
+        }else{
+            isHomeBaseLeft = false;
+            enemyBaseX = 0;
+            enemyBaseY = 0;
+        }
         // game loop
         while (true) {
             List<Monster> monsters = new ArrayList<>();
             List<Hero> heroes = new ArrayList<>();
             for (int i = 0; i < 2; i++) {
                 int health = in.nextInt(); // Your base health
-                int mana = in.nextInt(); // Ignore in the first league; Spend ten mana to cast a spell
+                mana = in.nextInt(); // Ignore in the first league; Spend ten mana to cast a spell
             }
             int entityCount = in.nextInt(); // Amount of heros and monsters you can see
             for (int i = 0; i < entityCount; i++) {
@@ -210,7 +267,7 @@ class Player {
                 int threatFor = in.nextInt(); // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
                 switch (type) {
                     case 0: // monster
-                        Monster m = new Monster(id, x, y, nearBase, threatFor);
+                        Monster m = new Monster(id, x, y, nearBase, threatFor, health);
                         monsters.add(m);
                         break;
                     case 1: // hero
@@ -235,6 +292,7 @@ class Player {
                 }
             }
             System.err.println("Dangerous:" + dangerousMonsters.size() + " wandering:" + wanderingMonsters.size());
+            System.err.println("Heroes:" + heroes.size());
             if(monsters.size() == 0){
                 System.err.println("No monsters to begin with?.");
             }
@@ -262,10 +320,36 @@ class Player {
                             System.err.println(closestMonster.getId() +" set closest for:" + theHero.getId());
                         }
                     }
+                    // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
                     if(closestMonster != null && dangerousMonsters.size() > 0){
-                        Command attackCommand = new Command("MOVE", closestMonster.getX(), closestMonster.getY());
-                        theHero.setCommand(attackCommand);
-                        System.err.println(attackCommand.toString());
+                        Command heroCommand = new Command("MOVE", closestMonster.getX(), closestMonster.getY());
+                        if(mana > 9 && closestDistance < 2190){
+                            if(closestMonster.getX() < 2000 && closestMonster.getY() < 2000 && closestMonster.getThreatFor() == 1 && closestDistance < 1240){
+                                heroCommand = new Command("SPELL","WIND", enemyBaseX, enemyBaseY);
+                            }else if(closestMonster.getX() > 15000 && closestMonster.getY() > 7000 && closestMonster.getThreatFor() == 1 && closestDistance < 1240){
+                                heroCommand = new Command("SPELL","WIND", enemyBaseX, enemyBaseY);
+                            }else if(closestMonster.getX() < 2000 && closestMonster.getY() < 2000 && closestMonster.getThreatFor() == 1){
+                                heroCommand = new Command("SPELL", "CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
+                            }else if(closestMonster.getX() > 15000 && closestMonster.getY() > 7000 && closestMonster.getThreatFor() == 1){
+                                heroCommand = new Command("SPELL","CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
+                            }else{
+                            }
+                        }
+                        // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
+                        if(mana > 200 && closestDistance < 2190){
+                            if(closestMonster.getX() < 4800 && closestMonster.getY() < 4800 && closestMonster.getThreatFor() == 1 && closestDistance < 1240){
+                                heroCommand = new Command("SPELL","WIND", enemyBaseX, enemyBaseY);
+                            }else if(closestMonster.getX() > 15000 && closestMonster.getY() > 7000 && closestMonster.getThreatFor() == 1 && closestDistance < 1240){
+                                heroCommand = new Command("SPELL","WIND", enemyBaseX, enemyBaseY);
+                            }else if(closestMonster.getX() < 4800 && closestMonster.getY() < 4800 && (closestMonster.getThreatFor() == 1 || closestMonster.getThreatFor() == 0)){
+                                heroCommand = new Command("SPELL", "CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
+                            }else if(closestMonster.getX() > 15000 && closestMonster.getY() > 7000 && (closestMonster.getThreatFor() == 1 || closestMonster.getThreatFor() == 0)){
+                                heroCommand = new Command("SPELL","CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
+                            }else{
+                            }
+                        }
+                        theHero.setCommand(heroCommand);
+                        System.err.println(heroCommand.toString());
                         for (int k = 0; k < dangerousMonsters.size(); k++) {
                             if (closestMonster.equals(dangerousMonsters.get(k))) {
                                 dangerousMonsters.get(k).setTargeted(true);
@@ -273,7 +357,7 @@ class Player {
                         }
                     } else{
                         System.err.println("No dangerous monsters anywhere");
-                        theHero.setCommand(new Command(Command.WAIT,theHero.getX(),theHero.getY()));
+                        //theHero.setCommand(new Command(Command.WAIT,theHero.getX(),theHero.getY()));
                     }
                 }
             }
@@ -299,26 +383,49 @@ class Player {
                     }
                     if(closestMonster != null && theHero.hasCommand() == false){
                         Command attackCommand = new Command("MOVE", closestMonster.getX(), closestMonster.getY());
+                        if(mana > 200 && closestDistance < 2199 && closestMonster.getHealth() > 13){
+                            if(closestMonster.getX() < 8000 && closestMonster.getY() < 4500 && closestMonster.getThreatFor() == 0){
+                                attackCommand = new Command("SPELL", "CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
+                            }else if(closestMonster.getX() > 8000 && closestMonster.getY() > 4500 && closestMonster.getThreatFor() == 0){
+                                attackCommand = new Command("SPELL","CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
+                            }else{
+                            }
+                        }
                         theHero.setCommand(attackCommand);
                         System.err.println(attackCommand.toString());
                         for (int k = 0; k < wanderingMonsters.size(); k++) {
                             if (closestMonster.equals(wanderingMonsters.get(k))) {
-                                wanderingMosters.get(k).setTargeted(true);
+                                wanderingMonsters.get(k).setTargeted(true);
                             }
                         }
                     } else{
                         System.err.println("No Monsters anywhere" + theHero.getId());
-                        theHero.setCommand(new Command(Command.WAIT,theHero.getX(),theHero.getY()));
+                        //theHero.setCommand(new Command(Command.WAIT,theHero.getX(),theHero.getY()));
                     }
                 }
             }
             if(visibleMonsters == 0){
                 // first crude attempt of starting formation
                 System.err.println("Heroes to formation");
-                heroes.get(0).setCommand(new Command(Command.MOVE, 4000,1700));
-                heroes.get(1).setCommand(new Command(Command.MOVE, 700,4000));
-                heroes.get(2).setCommand(new Command(Command.MOVE, 7000,7000));
+                if(baseX == 0){
+                    heroes.get(0).setCommand(new Command(Command.MOVE, 4800,1500));
+                    heroes.get(1).setCommand(new Command(Command.MOVE, 1800,4000));
+                    heroes.get(2).setCommand(new Command(Command.MOVE, 4000,4000));
+                }else{
+                    heroes.get(0).setCommand(new Command(Command.MOVE, 16000,4500));
+                    heroes.get(1).setCommand(new Command(Command.MOVE, 12000,5200));
+                    heroes.get(2).setCommand(new Command(Command.MOVE, 13000,7500));
+                }
             }
+/*
+            for(int i = 0; 0 < 2; i++){
+                System.err.println(i);
+                if(heroes.get(i).hasCommand()){
+                    System.err.println("hero " + i + " has command");
+                }else if(!heroes.get(i).hasCommand()){
+                   heroes.get(i).setCommand(new Command(Command.MOVE, 1100,1100));
+                }
+            }*/
             for (int i = 0; i < heroesPerPlayer; i++) {
                 // Write an action using System.out.println()
                 // To debug: System.err.println("Debug messages...");
@@ -349,5 +456,5 @@ Spells
 class Spell {
     static final String WIND = "WIND";
     static final String SHIELD = "SHIELD";
-    static final String SHIELD = "CONTROL";
+    static final String CONTROL = "CONTROL";
 }

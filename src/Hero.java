@@ -44,9 +44,9 @@ public class Hero {
     }
 
     public boolean hasCommand() {
-        if(this.command == null){
+        if (this.command == null) {
             return false;
-        }else{
+        } else {
             return true;
         }
     }
