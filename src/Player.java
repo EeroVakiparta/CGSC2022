@@ -99,7 +99,7 @@ class Player {
 
                         for (int k = 0; k < dangerousMonsters.size(); k++) {
                             if (closestMonster.equals(dangerousMonsters.get(k))) {
-                                dangerousMonsters.remove(k);
+                                dangerousMonsters.get(k).setTargeted(true);
                             }
                         }
                     } else{
@@ -135,8 +135,7 @@ class Player {
 
                         for (int k = 0; k < wanderingMonsters.size(); k++) {
                             if (closestMonster.equals(wanderingMonsters.get(k))) {
-                                System.err.println("Removing monster:" + closestMonster.getId() + "assigned to" +theHero.getId());
-                                wanderingMonsters.remove(k);
+                                wanderingMonsters.get(k).setTargeted(true);
                             }
                         }
                     } else{

@@ -17,6 +17,6 @@ public class Spell {
 
     static final String WIND = "WIND";
     static final String SHIELD = "SHIELD";
-    static final String SHIELD = "CONTROL";
+    static final String CONTROL = "CONTROL";
 
 }

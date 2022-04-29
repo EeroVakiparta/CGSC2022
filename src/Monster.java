@@ -4,6 +4,7 @@ public class Monster {
     int id, x, y;
     int nearBase;
     int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
+    boolean isTargeted;
 
     public Monster(int id, int x, int y, int nearBase, int threatFor) {
         this.id = id;
@@ -11,6 +12,7 @@ public class Monster {
         this.y = y;
         this.nearBase = nearBase;
         this.threatFor = threatFor;
+        this.isTargeted = false;
     }
 
     public int getId() {
@@ -51,6 +53,14 @@ public class Monster {
 
     public void setThreatFor(int threatFor) {
         this.threatFor = threatFor;
+    }
+
+    public boolean isTargeted() {
+        return isTargeted;
+    }
+
+    public void setTargeted(boolean targeted) {
+        isTargeted = targeted;
     }
 
     @Override

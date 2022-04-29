@@ -1,4 +1,4 @@
-//Bundle uploaded at 04/23/2022 11:05:45
+//Bundle uploaded at 04/23/2022 11:17:01
 import java.util.*;
 import java.util.stream.Collectors;
 class Command {
@@ -113,12 +113,14 @@ class Monster {
     int id, x, y;
     int nearBase;
     int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
+    boolean isTargeted;
     public Monster(int id, int x, int y, int nearBase, int threatFor) {
         this.id = id;
         this.x = x;
         this.y = y;
         this.nearBase = nearBase;
         this.threatFor = threatFor;
+        this.isTargeted = false;
     }
     public int getId() {
         return id;
@@ -149,6 +151,12 @@ class Monster {
     }
     public void setThreatFor(int threatFor) {
         this.threatFor = threatFor;
+    }
+    public boolean isTargeted() {
+        return isTargeted;
+    }
+    public void setTargeted(boolean targeted) {
+        isTargeted = targeted;
     }
     @Override
     public String toString() {
@@ -260,7 +268,7 @@ class Player {
                         System.err.println(attackCommand.toString());
                         for (int k = 0; k < dangerousMonsters.size(); k++) {
                             if (closestMonster.equals(dangerousMonsters.get(k))) {
-                                dangerousMonsters.remove(k);
+                                dangerousMonsters.get(k).setTargeted(true);
                             }
                         }
                     } else{
@@ -295,8 +303,7 @@ class Player {
                         System.err.println(attackCommand.toString());
                         for (int k = 0; k < wanderingMonsters.size(); k++) {
                             if (closestMonster.equals(wanderingMonsters.get(k))) {
-                                System.err.println("Removing monster:" + closestMonster.getId() + "assigned to" +theHero.getId());
-                                wanderingMonsters.remove(k);
+                                wanderingMosters.get(k).setTargeted(true);
                             }
                         }
                     } else{
