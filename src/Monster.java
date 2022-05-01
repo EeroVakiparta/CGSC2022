@@ -4,17 +4,20 @@ public class Monster {
     int id, x, y;
     int nearBase;
     int threatFor; // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
-    boolean isTargeted;
+    int targeted;
     int health;
+    int vx; // trajectory
+    int vy;
 
-    public Monster(int id, int x, int y, int nearBase, int threatFor, int health) {
+    public Monster(int id, int x, int y, int nearBase, int threatFor, int health, int vx, int vy) {
         this.id = id;
         this.x = x;
         this.y = y;
         this.nearBase = nearBase;
         this.threatFor = threatFor;
-        this.isTargeted = false;
         this.health = health;
+        this.vx = vx;
+        this.vy = vy;
     }
 
     public int getId() {
@@ -57,12 +60,28 @@ public class Monster {
         this.threatFor = threatFor;
     }
 
-    public boolean isTargeted() {
-        return isTargeted;
+    public int getTargeteders() {
+        return targeted;
     }
 
-    public void setTargeted(boolean targeted) {
-        isTargeted = targeted;
+    public void setTargeted(int targeted) {
+        this.targeted = targeted;
+    }
+
+    public void minusTargeter() {
+        if (targeted < 1) {
+            System.err.Println("ERROR unrealist amount of targeters")
+        } else {
+            this.targeted = targeted - 1;
+        }
+    }
+
+    public void plusTargeter() {
+        if (targeted > 2) {
+            System.err.Println("ERROR unrealist amount of targeters")
+        } else {
+            this.targeted = targeted + 1;
+        }
     }
 
     public int getHealth() {
@@ -71,6 +90,22 @@ public class Monster {
 
     public void setHealth(int health) {
         this.health = health;
+    }
+
+    public int getVx() {
+        return vx;
+    }
+
+    public void setVx(int vx) {
+        this.vx = vx;
+    }
+
+    public int getVy() {
+        return vy;
+    }
+
+    public void setVy(int vy) {
+        this.vy = vy;
     }
 
     @Override

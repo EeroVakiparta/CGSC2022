@@ -49,7 +49,7 @@ class Player {
                 int threatFor = in.nextInt(); // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
                 switch (type) {
                     case 0: // monster
-                        Monster m = new Monster(id, x, y, nearBase, threatFor, health);
+                        Monster m = new Monster(id, x, y, nearBase, threatFor, health, vx, vy);
                         monsters.add(m);
                         break;
                     case 1: // hero
@@ -84,51 +84,60 @@ class Player {
             if (dangerousMonsters.size() > 0) {
                 System.err.println("Dangerous mosnters sorting.");
                 for (int i = 0; i < heroes.size(); i++) {
-                    Monster closestMonster = null;
+                    Monster targetMonster = null;
                     ;
                     if (dangerousMonsters.size() > 0) {
-                        closestMonster = dangerousMonsters.get(0);
+                        targetMonster = dangerousMonsters.get(0);
                     }
                     Hero theHero = heroes.get(i);
                     x1 = theHero.getX();
                     y1 = theHero.getY();
                     for (int j = 0; j < dangerousMonsters.size(); j++) {
-                        x2 = dangerousMonsters.get(j).getX();
-                        y2 = dangerousMonsters.get(j).getY();
-                        distance = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-                        if (distance < closestDistance) {
+                        Monster theMonster = dangerousMonsters.get(j);
+                        x2 = theMonster.getX();
+                        y2 = theMonster.getY();
+                        distance = getDistanceBetween(x1, y1, x2, y2);
+                        if (getMonstersDistanceToBase(isHomeBaseLeft, theMonster) < 5000 && targetMonster.getTargeteders() < 1) {
+                            targetMonster.plusTargeter();
+                            targetMonster = theMonster;
+                        } else if (distance < closestDistance) {
                             closestDistance = distance;
-                            closestMonster = dangerousMonsters.get(j);
-                            theHero.setClosestMonster(closestMonster);
-                            System.err.println(closestMonster.getId() + " set closest for:" + theHero.getId());
+                            targetMonster = theMonster;
+                            theHero.setClosestMonster(targetMonster);
+                            System.err.println(targetMonster.getId() + " set closest for:" + theHero.getId());
                         }
                     }
                     // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
-                    if (closestMonster != null && dangerousMonsters.size() > 0) {
-                        Command heroCommand = new Command("MOVE", closestMonster.getX(), closestMonster.getY());
+                    if (targetMonster != null && dangerousMonsters.size() > 0) {
+                        if (distance < 400) {
+                            Command heroCommand = new Command("MOVE", targetMonster.getX(), targetMonster.getY());
+                        } else {
+                            Command heroCommand = new Command("MOVE", targetMonster.getVx(), targetMonster.getVy());
+                        }
+
                         if (mana > 9 && closestDistance < 2190) {
-                            if (closestMonster.getX() < 2000 && closestMonster.getY() < 2000 && closestMonster.getThreatFor() == 1 && closestDistance < 1240) {
+                            if (targetMonster.getX() < 2000 && targetMonster.getY() < 2000 && targetMonster.getThreatFor() == 1 && closestDistance < 1240) {
                                 heroCommand = new Command("SPELL", "WIND", enemyBaseX, enemyBaseY);
-                            } else if (closestMonster.getX() > 15000 && closestMonster.getY() > 7000 && closestMonster.getThreatFor() == 1 && closestDistance < 1240) {
+                            } else if (targetMonster.getX() > 15000 && targetMonster.getY() > 7000 && targetMonster.getThreatFor() == 1 && closestDistance < 1240) {
                                 heroCommand = new Command("SPELL", "WIND", enemyBaseX, enemyBaseY);
-                            } else if (closestMonster.getX() < 2000 && closestMonster.getY() < 2000 && closestMonster.getThreatFor() == 1) {
-                                heroCommand = new Command("SPELL", "CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
-                            } else if (closestMonster.getX() > 15000 && closestMonster.getY() > 7000 && closestMonster.getThreatFor() == 1) {
-                                heroCommand = new Command("SPELL", "CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
+                            } else if (targetMonster.getX() < 2000 && targetMonster.getY() < 2000 && targetMonster.getThreatFor() == 1) {
+                                heroCommand = new Command("SPELL", "CONTROL", targetMonster.getId(), enemyBaseX, enemyBaseY);
+                            } else if (targetMonster.getX() > 15000 && targetMonster.getY() > 7000 && targetMonster.getThreatFor() == 1) {
+                                heroCommand = new Command("SPELL", "CONTROL", targetMonster.getId(), enemyBaseX, enemyBaseY);
                             } else {
 
                             }
                         }
                         // Given this monster's trajectory, is it a threat to 1=your base, 2=your opponent's base, 0=neither
                         if (mana > 200 && closestDistance < 2190) {
-                            if (closestMonster.getX() < 4800 && closestMonster.getY() < 4800 && closestMonster.getThreatFor() == 1 && closestDistance < 1240) {
+                            if (targetMonster.getX() < 4800 && targetMonster.getY() < 4800 && targetMonster.getThreatFor() == 1 && closestDistance < 1240) {
                                 heroCommand = new Command("SPELL", "WIND", enemyBaseX, enemyBaseY);
-                            } else if (closestMonster.getX() > 15000 && closestMonster.getY() > 7000 && closestMonster.getThreatFor() == 1 && closestDistance < 1240) {
+                            } else if (targetMonster.getX() > 15000 && targetMonster.getY() > 7000 && targetMonster.getThreatFor() == 1 && closestDistance < 1240) {
                                 heroCommand = new Command("SPELL", "WIND", enemyBaseX, enemyBaseY);
-                            } else if (closestMonster.getX() < 4800 && closestMonster.getY() < 4800 && (closestMonster.getThreatFor() == 1 || closestMonster.getThreatFor() == 0)) {
-                                heroCommand = new Command("SPELL", "CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
-                            } else if (closestMonster.getX() > 15000 && closestMonster.getY() > 7000 && (closestMonster.getThreatFor() == 1 || closestMonster.getThreatFor() == 0)) {
-                                heroCommand = new Command("SPELL", "CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
+                            } else if (targetMonster.getX() < 4800 && targetMonster.getY() < 4800 && (targetMonster.getThreatFor() == 1 || targetMonster.getThreatFor() == 0)) {
+                                heroCommand = new Command("SPELL", "CONTROL", targetMonster.getId(), enemyBaseX, enemyBaseY);
+                            } else if (targetMonster.getX() > 15000 && targetMonster.getY() > 7000 && (targetMonster.getThreatFor() == 1 || targetMonster.getThreatFor() == 0)) {
+                                heroCommand = new Command("SPELL", "CONTROL", targetMonster.getId(), enemyBaseX, enemyBaseY);
                             } else {
 
                             }
@@ -139,8 +148,8 @@ class Player {
                         System.err.println(heroCommand.toString());
 
                         for (int k = 0; k < dangerousMonsters.size(); k++) {
-                            if (closestMonster.equals(dangerousMonsters.get(k))) {
-                                dangerousMonsters.get(k).setTargeted(true);
+                            if (targetMonster.equals(dangerousMonsters.get(k))) {
+                                dangerousMonsters.get(k).plusTargeter();
                             }
                         }
                     } else {
@@ -163,7 +172,7 @@ class Player {
                     for (int j = 0; j < wanderingMonsters.size(); j++) {
                         x2 = wanderingMonsters.get(j).getX();
                         y2 = wanderingMonsters.get(j).getY();
-                        distance = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+                        distance = getDistanceBetween(x1, y1, x2, y2);
                         if (distance < closestDistance) {
                             closestDistance = distance;
                             closestMonster = wanderingMonsters.get(j);
@@ -171,8 +180,11 @@ class Player {
                         }
                     }
                     if (closestMonster != null && theHero.hasCommand() == false) {
-                        Command attackCommand = new Command("MOVE", closestMonster.getX(), closestMonster.getY());
-
+                        if (distance < 400) {
+                            Command heroCommand = new Command("MOVE", targetMonster.getX(), targetMonster.getY());
+                        } else {
+                            Command heroCommand = new Command("MOVE", targetMonster.getVx(), targetMonster.getVy());
+                        }
                         if (mana > 200 && closestDistance < 2199 && closestMonster.getHealth() > 13) {
                             if (closestMonster.getX() < 8000 && closestMonster.getY() < 4500 && closestMonster.getThreatFor() == 0) {
                                 attackCommand = new Command("SPELL", "CONTROL", closestMonster.getId(), enemyBaseX, enemyBaseY);
@@ -186,7 +198,7 @@ class Player {
                         System.err.println(attackCommand.toString());
                         for (int k = 0; k < wanderingMonsters.size(); k++) {
                             if (closestMonster.equals(wanderingMonsters.get(k))) {
-                                wanderingMonsters.get(k).setTargeted(true);
+                                wanderingMonsters.get(k).plusTargeter();
                             }
                         }
                     } else {
