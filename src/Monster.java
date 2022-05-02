@@ -70,7 +70,7 @@ public class Monster {
 
     public void minusTargeter() {
         if (targeted < 1) {
-            System.err.Println("ERROR unrealist amount of targeters")
+            System.err.println("ERROR unrealist amount of targeters");
         } else {
             this.targeted = targeted - 1;
         }
@@ -78,7 +78,7 @@ public class Monster {
 
     public void plusTargeter() {
         if (targeted > 2) {
-            System.err.Println("ERROR unrealist amount of targeters")
+            System.err.println("ERROR unrealist amount of targeters");
         } else {
             this.targeted = targeted + 1;
         }
